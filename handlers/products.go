@@ -3,6 +3,7 @@ package handlers
 import (
 	"log"
 	"net/http"
+	"regexp"
 
 	"github.com/byun-c-ww/go_Micro/data"
 )
@@ -21,8 +22,23 @@ func (p *Products) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.Method == http.MethodPost {
-		p.PostProducts(rw, r)
+		p.addProducts(rw, r)
 		return
+	}
+	if r.Method == http.MethodPut {
+		reg := regexp.MustCompile(`/([0-9]+)`)
+		g := reg.FindAllStringSubmatch(r.URL.Path, -1)
+
+		if len(g) != 1 {
+			http.Error(rw, "Invalid URI", http.StatusBadRequest)
+			return
+		}
+
+		if len(g[0]) != 1 {
+			http.Error(rw, "Invalid URI", http.StatusBadRequest)
+			return
+		}
+		idString := g[0][1]
 	}
 
 	rw.WriteHeader(http.StatusMethodNotAllowed)
@@ -45,4 +61,6 @@ func (p *Products) addProducts(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, "Unable to convert to JSON", http.StatusBadRequest)
 	}
 	p.l.Printf("Prod: %#v", prod)
+
+	data.AddProducts(prod)
 }

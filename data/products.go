@@ -33,6 +33,17 @@ func GetProducts() Products {
 	return productList
 }
 
+func AddProducts(prod *Product) {
+	ID := get_lastID() + 1
+	prod.ID = ID
+	productList = append(productList, prod)
+}
+
+func get_lastID() int {
+	last := productList[len(productList)-1]
+	return last.ID
+}
+
 var productList = []*Product{
 	&Product{
 		ID:          1,
