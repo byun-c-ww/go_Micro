@@ -3,18 +3,38 @@ package data
 import (
 	"encoding/json"
 	"io"
+	"regexp"
 	"time"
+
+	"github.com/go-playground/validator"
 )
 
 type Product struct {
 	ID          int     `json:"id"`
-	Name        string  `json:"name"`
+	Name        string  `json:"name" validate:"required"`
 	Description string  `json:"description"`
-	Price       float32 `json:"price"`
-	SKU         string  `json:"sku"`
+	Price       float32 `json:"price" validate:"gt=0"`
+	SKU         string  `json:"sku" validate:"required,sku"`
 	CreatedOn   string  `json:"-"`
 	UpdatedOn   string  `json:"-"`
 	DeletedOn   string  `json:"-"`
+}
+
+func (p *Product) Validate() error {
+	validate := validator.New()
+	validate.RegisterValidation("sku")
+	return validate.Struct(p)
+}
+
+func validateSKU(fl validator.FieldLevel) bool {
+	re := regexp.MustCompile(`[a-z]+-[a-z]+-[a-z]+`)
+	matches := re.FindAllString(fl.Field().String(), -1)
+
+	if len(matches) != 1 {
+		return false
+	}
+
+	return true
 }
 
 type Products []*Product
@@ -37,6 +57,14 @@ func AddProducts(prod *Product) {
 	ID := get_lastID() + 1
 	prod.ID = ID
 	productList = append(productList, prod)
+}
+
+func UpdateProducts(p *Product, id int) {
+	for i, v := range productList {
+		if v.ID == id {
+			productList[i] = p
+		}
+	}
 }
 
 func get_lastID() int {
